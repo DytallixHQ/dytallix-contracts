@@ -1,24 +1,62 @@
 # Dytallix Contracts
 
-On-chain WASM smart contracts for the Dytallix protocol.
+Reference WASM contracts, protocol state machines, and example contract patterns for Dytallix.
 
-## Status
+This repository now contains the first complete public contracts toolkit for the Dytallix contract layer:
 
-Under construction.
+- core tokenomics modules for DGT, DRT, and emission control
+- reference staking, governance, and algorithm-registry contracts
+- the shared WASM runtime, bridge, storage, gas, and security utilities
+- standalone example contracts that show how to compose the modules
+- contributor docs, testing guidance, and CI support
 
-## Contracts
+## Quick Start
 
-- emission_controller — PID-governed DRT emission controller. Adjusts issuance based on network utilization. 40% validators, 30% stakers, 30% treasury.
-- dgt_token — Dytallix Governance Token. Fixed supply 1,000,000,000 DGT. Used for governance voting and staking delegation. Never spent on gas.
-- drt_token — Dytallix Reward Token. Elastic supply. Used for all gas fees, validator rewards, and staking rewards. Burnable.
-- staking — DGT delegation and DRT reward accrual. Reward index accounting for O(1) distribution.
-- governance — Typed proposal creation, DGT-weighted voting, timelock execution.
-- algorithm_registry — Cryptographic algorithm lifecycle management. Active, Deprecated, Revoked states. Emergency circuit breaker.
+```bash
+cargo fmt
+cargo test
+cargo test --manifest-path examples/counter/Cargo.toml
+cargo test --manifest-path examples/reward_splitter/Cargo.toml
+cargo test --manifest-path examples/algorithm_guard/Cargo.toml
+```
 
-## Links
+## Repository Map
 
-- SDK: https://github.com/DytallixHQ/dytallix-sdk
-- Documentation: https://github.com/DytallixHQ/dytallix-docs
-- Whitepapers: https://dytallix.com
-- Website: https://dytallix.com
-- Discord: https://discord.com/invite/eyVvu5kmPG
+- [docs/index.md](docs/index.md) - documentation landing page
+- [docs/architecture.md](docs/architecture.md) - crate layout, execution model, and contract boundaries
+- [docs/reference-contracts.md](docs/reference-contracts.md) - module-by-module contract reference
+- [docs/examples.md](docs/examples.md) - example contract walkthroughs
+- [docs/testing.md](docs/testing.md) - local development and CI commands
+- [CONTRIBUTING.md](CONTRIBUTING.md) - contribution workflow
+- [SECURITY.md](SECURITY.md) - vulnerability reporting and review scope
+- [.github/workflows/ci.yml](.github/workflows/ci.yml) - CI checks for formatting and tests
+
+## Reference Contracts
+
+- [src/tokenomics/dgt_token.rs](src/tokenomics/dgt_token.rs) - fixed-supply governance token
+- [src/tokenomics/drt_token.rs](src/tokenomics/drt_token.rs) - elastic reward token with burn and emission hooks
+- [src/tokenomics/emission_controller.rs](src/tokenomics/emission_controller.rs) - adaptive emission controller and reward-pool distribution
+- [src/staking.rs](src/staking.rs) - validator registration, delegation, slashing, and reward-index accounting
+- [src/governance.rs](src/governance.rs) - deposits, voting, quorum checks, timelock, and execution routing
+- [src/algorithm_registry.rs](src/algorithm_registry.rs) - cryptographic algorithm lifecycle management with circuit breaker support
+- [src/runtime.rs](src/runtime.rs) - WASM execution runtime and host-side contract orchestration
+- [src/security/](src/security) - gas attack analysis, scanning, fuzzing, and audit helpers
+- [src/storage_optimizer.rs](src/storage_optimizer.rs) - storage caching, compression, and access-pattern analysis
+
+## Example Contracts
+
+- [examples/counter](examples/counter) - minimal stateful counter contract with owner-guarded reset
+- [examples/reward_splitter](examples/reward_splitter) - emission splitting contract layered on the staking module
+- [examples/algorithm_guard](examples/algorithm_guard) - algorithm attestation gate built on the registry contract
+- [examples/README.md](examples/README.md) - example index and commands
+
+## Support Files
+
+- [CHANGELOG.md](CHANGELOG.md) - release notes for the public contracts repo
+- [Makefile](Makefile) - common formatting and test commands
+- [.gitignore](.gitignore) - build artifact exclusions
+
+## Notes
+
+This repository is the reference contracts and examples surface for Dytallix. It is not a claim that every module here is already wired into the current public testnet deployment path. The authoritative protocol and API notes live in [dytallix-docs](https://github.com/DytallixHQ/dytallix-docs).
+

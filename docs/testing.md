@@ -10,6 +10,7 @@ cargo test
 ## Example Commands
 
 ```bash
+cargo test --manifest-path examples/ping/Cargo.toml
 cargo test --manifest-path examples/counter/Cargo.toml
 cargo test --manifest-path examples/reward_splitter/Cargo.toml
 cargo test --manifest-path examples/algorithm_guard/Cargo.toml

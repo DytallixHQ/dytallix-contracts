@@ -15,6 +15,7 @@ This repository now contains the first complete public contracts toolkit for the
 ```bash
 cargo fmt
 cargo test
+cargo test --manifest-path examples/ping/Cargo.toml
 cargo test --manifest-path examples/counter/Cargo.toml
 cargo test --manifest-path examples/reward_splitter/Cargo.toml
 cargo test --manifest-path examples/algorithm_guard/Cargo.toml
@@ -45,6 +46,7 @@ cargo test --manifest-path examples/algorithm_guard/Cargo.toml
 
 ## Example Contracts
 
+- [examples/ping](examples/ping) - minimal exported-method contract for signed call smoke tests
 - [examples/counter](examples/counter) - minimal stateful counter contract with owner-guarded reset
 - [examples/reward_splitter](examples/reward_splitter) - emission splitting contract layered on the staking module
 - [examples/algorithm_guard](examples/algorithm_guard) - algorithm attestation gate built on the registry contract

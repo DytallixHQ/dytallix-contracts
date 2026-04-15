@@ -27,7 +27,7 @@ cargo test --manifest-path examples/algorithm_guard/Cargo.toml
 - `src/` contains reusable contract modules and utilities.
 - `examples/` contains standalone example contracts.
 - `tests/` contains integration coverage for the shared crate.
-- `test-harness/` contains shared helpers for contract/runtime tests.
+- `test-harness/` contains prototype harness interfaces that are not yet part of the supported CI surface.
 - `docs/` contains repo-local contract documentation.
 
 ## Pull Requests

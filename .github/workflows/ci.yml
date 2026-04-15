@@ -17,6 +17,8 @@ jobs:
         run: cargo fmt --check
       - name: Library tests
         run: cargo test --all-targets
+      - name: Ping example
+        run: cargo test --manifest-path examples/ping/Cargo.toml
       - name: Counter example
         run: cargo test --manifest-path examples/counter/Cargo.toml
       - name: Reward splitter example

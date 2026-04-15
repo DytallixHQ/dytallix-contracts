@@ -1,6 +1,8 @@
-//! Dytallix Smart Contract Test Harness
+//! Prototype interfaces for a future Dytallix contract test harness.
 //!
-//! Provides WASM contract deployment, method calls, and AI audit integration.
+//! This directory is not wired into the main crate CI surface and does not
+//! represent a supported public execution harness yet. The types here exist as
+//! placeholders for future harness integration work.
 
 pub struct ContractAddress(pub String);
 pub struct ContractResult;
@@ -29,33 +31,33 @@ pub struct DummyTestRunner;
 
 impl WasmCompiler for DummyTestRunner {
     fn compile_source(&self, _source: &str) -> Result<Vec<u8>, CompileError> {
-        // TODO: Integrate real WASM compiler
+        // Placeholder implementation for interface sketching only.
         Ok(vec![])
     }
 }
 
 impl ContractDeployer for DummyTestRunner {
     fn deploy(&self, _wasm: &[u8]) -> Result<ContractAddress, DeployError> {
-        // TODO: Deploy contract to test harness
+        // Placeholder implementation for interface sketching only.
         Ok(ContractAddress("dummy_address".to_string()))
     }
 }
 
 impl ContractTestRunner for DummyTestRunner {
     fn deploy_contract(&self, wasm: &[u8]) -> ContractAddress {
-        // TODO: Deploy contract
+        let _ = wasm;
         ContractAddress("dummy_address".to_string())
     }
     fn call_method(&self, _address: &ContractAddress, _method: &str, _args: &[u8]) -> Result<ContractResult, ContractError> {
-        // TODO: Call contract method
+        // Placeholder implementation for interface sketching only.
         Ok(ContractResult)
     }
     fn get_state(&self, _address: &ContractAddress) -> ContractState {
-        // TODO: Return contract state
+        // Placeholder implementation for interface sketching only.
         ContractState
     }
     fn audit_with_ai(&self, _address: &ContractAddress) -> AuditReport {
-        // TODO: Integrate AI audit
+        // Placeholder implementation for interface sketching only.
         AuditReport
     }
 }

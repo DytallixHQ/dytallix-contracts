@@ -1,8 +1,8 @@
 pub mod algorithm_registry;
 pub mod cosmos_bridge;
-pub mod cosmos_bridge_optimized;
 pub mod gas_optimizer;
 pub mod governance;
+#[doc(hidden)]
 pub mod oracle_simple;
 pub mod runtime;
 pub mod security;
@@ -11,7 +11,9 @@ pub mod storage_optimizer;
 pub mod tokenomics;
 pub mod types;
 
-// Re-export oracle_simple as oracle for compatibility
+mod cosmos_bridge_optimized;
+
+// Re-export the dependency-light oracle implementation under the canonical public name.
 pub use oracle_simple as oracle;
 
 use scale::{Decode, Encode};

@@ -10,6 +10,18 @@ This repository contains the public reference contracts toolkit for the Dytallix
 - standalone example contracts that show how to compose the modules
 - contributor docs, testing guidance, and CI support
 
+## Prerequisites
+
+Install [Rust](https://www.rust-lang.org/tools/install) with `rustup`. That
+provides the Rust toolchain and `cargo` used by the contract workspace.
+
+If you plan to build deployable WASM artifacts locally, add the standard
+target:
+
+```bash
+rustup target add wasm32-unknown-unknown
+```
+
 ## Quick Start
 
 ```bash

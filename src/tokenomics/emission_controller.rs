@@ -68,19 +68,40 @@ impl EmissionController {
     }
 
     /// Set the DRT token contract address (only callable by owner)
-    pub fn set_drt_token(&mut self, token_address: Address) -> TokenomicsResult<()> {
+    pub fn set_drt_token(
+        &mut self,
+        token_address: Address,
+        caller: &Address,
+    ) -> TokenomicsResult<()> {
+        if caller != &self.owner {
+            return Err(TokenomicsError::NotAuthorized);
+        }
         self.drt_token = Some(token_address);
         Ok(())
     }
 
     /// Set the governance contract address (only callable by owner)
-    pub fn set_governance_contract(&mut self, governance_address: Address) -> TokenomicsResult<()> {
+    pub fn set_governance_contract(
+        &mut self,
+        governance_address: Address,
+        caller: &Address,
+    ) -> TokenomicsResult<()> {
+        if caller != &self.owner {
+            return Err(TokenomicsError::NotAuthorized);
+        }
         self.governance_contract = Some(governance_address);
         Ok(())
     }
 
     /// Set the treasury address (only callable by owner)
-    pub fn set_treasury(&mut self, treasury_address: Address) -> TokenomicsResult<()> {
+    pub fn set_treasury(
+        &mut self,
+        treasury_address: Address,
+        caller: &Address,
+    ) -> TokenomicsResult<()> {
+        if caller != &self.owner {
+            return Err(TokenomicsError::NotAuthorized);
+        }
         self.treasury = Some(treasury_address);
         Ok(())
     }
@@ -356,18 +377,42 @@ mod tests {
     }
 
     #[test]
+    fn test_set_contracts_unauthorized() {
+        let owner = "dyt1owner".to_string();
+        let attacker = "dyt1attacker".to_string();
+        let mut controller = EmissionController::new(owner);
+
+        // Non-owner callers must be rejected by every privileged setter.
+        assert!(matches!(
+            controller.set_drt_token("dyt1token".to_string(), &attacker),
+            Err(TokenomicsError::NotAuthorized)
+        ));
+        assert!(matches!(
+            controller.set_governance_contract("dyt1gov".to_string(), &attacker),
+            Err(TokenomicsError::NotAuthorized)
+        ));
+        assert!(matches!(
+            controller.set_treasury("dyt1treasury".to_string(), &attacker),
+            Err(TokenomicsError::NotAuthorized)
+        ));
+        assert!(controller.drt_token.is_none());
+        assert!(controller.governance_contract.is_none());
+        assert!(controller.treasury.is_none());
+    }
+
+    #[test]
     fn test_set_contracts() {
         let owner = "dyt1owner".to_string();
         let token_addr = "dyt1token".to_string();
         let gov_addr = "dyt1governance".to_string();
         let treasury_addr = "dyt1treasury".to_string();
-        let mut controller = EmissionController::new(owner);
+        let mut controller = EmissionController::new(owner.clone());
 
-        controller.set_drt_token(token_addr.clone()).unwrap();
+        controller.set_drt_token(token_addr.clone(), &owner).unwrap();
         controller
-            .set_governance_contract(gov_addr.clone())
+            .set_governance_contract(gov_addr.clone(), &owner)
             .unwrap();
-        controller.set_treasury(treasury_addr.clone()).unwrap();
+        controller.set_treasury(treasury_addr.clone(), &owner).unwrap();
 
         assert_eq!(controller.drt_token, Some(token_addr));
         assert_eq!(controller.governance_contract, Some(gov_addr));
@@ -378,10 +423,10 @@ mod tests {
     fn test_proposal_lifecycle() {
         let owner = "dyt1owner".to_string();
         let gov_addr = "dyt1governance".to_string();
-        let mut controller = EmissionController::new(owner);
+        let mut controller = EmissionController::new(owner.clone());
 
         controller
-            .set_governance_contract(gov_addr.clone())
+            .set_governance_contract(gov_addr.clone(), &owner)
             .unwrap();
 
         // Submit proposal
@@ -419,7 +464,7 @@ mod tests {
     #[test]
     fn test_emission_processing() {
         let owner = "dyt1owner".to_string();
-        let mut controller = EmissionController::new(owner);
+        let mut controller = EmissionController::new(owner.clone());
 
         // Process emission for block 10
         let result = controller.process_emission(10, 5000);
@@ -438,7 +483,7 @@ mod tests {
         let owner = "dyt1owner".to_string();
         let validator = "dyt1validator".to_string();
         let staker = "dyt1staker".to_string();
-        let mut controller = EmissionController::new(owner);
+        let mut controller = EmissionController::new(owner.clone());
 
         // Process some emission first
         controller.process_emission(10, 5000).unwrap();
@@ -465,7 +510,7 @@ mod tests {
     #[test]
     fn test_invalid_emission_rate() {
         let owner = "dyt1owner".to_string();
-        let mut controller = EmissionController::new(owner);
+        let mut controller = EmissionController::new(owner.clone());
 
         // Try to set rate above maximum
         let result = controller.set_emission_rate(10000);
@@ -480,7 +525,7 @@ mod tests {
     fn test_unauthorized_proposal_approval() {
         let owner = "dyt1owner".to_string();
         let unauthorized = "dyt1unauthorized".to_string();
-        let mut controller = EmissionController::new(owner);
+        let mut controller = EmissionController::new(owner.clone());
 
         // Submit proposal
         let proposal_id = 1;

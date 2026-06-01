@@ -39,17 +39,17 @@ impl TokenomicsTestHarness {
             .mint_initial_supply("dyt1treasury".to_string(), 1_000_000)
             .unwrap();
         drt_token
-            .set_emission_controller("dyt1emission_controller".to_string())
+            .set_emission_controller("dyt1emission_controller".to_string(), &owner)
             .unwrap();
 
         emission_controller
-            .set_drt_token("dyt1drt_token".to_string())
+            .set_drt_token("dyt1drt_token".to_string(), &owner)
             .unwrap();
         emission_controller
-            .set_governance_contract("dyt1governance".to_string())
+            .set_governance_contract("dyt1governance".to_string(), &owner)
             .unwrap();
         emission_controller
-            .set_treasury("dyt1treasury".to_string())
+            .set_treasury("dyt1treasury".to_string(), &owner)
             .unwrap();
 
         Self {

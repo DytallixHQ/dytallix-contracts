@@ -57,7 +57,14 @@ impl DRTToken {
     }
 
     /// Set the emission controller address (only callable by owner)
-    pub fn set_emission_controller(&mut self, controller: Address) -> TokenomicsResult<()> {
+    pub fn set_emission_controller(
+        &mut self,
+        controller: Address,
+        caller: &Address,
+    ) -> TokenomicsResult<()> {
+        if caller != &self.owner {
+            return Err(TokenomicsError::NotAuthorized);
+        }
         self.emission_controller = Some(controller);
         Ok(())
     }
@@ -82,10 +89,17 @@ impl DRTToken {
             return Err(TokenomicsError::InvalidAmount);
         }
 
-        // Update balance and total supply
+        // Update balance and total supply (checked to prevent overflow)
         let current_balance = self.balance_of(&to);
-        self.balances.insert(to.clone(), current_balance + amount);
-        self.total_supply += amount;
+        let new_balance = current_balance
+            .checked_add(amount)
+            .ok_or(TokenomicsError::Overflow)?;
+        let new_supply = self
+            .total_supply
+            .checked_add(amount)
+            .ok_or(TokenomicsError::Overflow)?;
+        self.balances.insert(to.clone(), new_balance);
+        self.total_supply = new_supply;
 
         Ok(())
     }
@@ -129,10 +143,13 @@ impl DRTToken {
             return Err(TokenomicsError::InsufficientBalance);
         }
 
-        // Update balances
-        self.balances.insert(from.clone(), from_balance - amount);
+        // Update balances (checked to prevent overflow)
         let to_balance = self.balance_of(&to);
-        self.balances.insert(to.clone(), to_balance + amount);
+        let new_to_balance = to_balance
+            .checked_add(amount)
+            .ok_or(TokenomicsError::Overflow)?;
+        self.balances.insert(from.clone(), from_balance - amount);
+        self.balances.insert(to.clone(), new_to_balance);
 
         Ok(())
     }
@@ -344,9 +361,9 @@ mod tests {
     fn test_drt_set_emission_controller() {
         let owner = "dyt1owner".to_string();
         let controller = "dyt1controller".to_string();
-        let mut token = DRTToken::new(owner);
+        let mut token = DRTToken::new(owner.clone());
 
-        let result = token.set_emission_controller(controller.clone());
+        let result = token.set_emission_controller(controller.clone(), &owner);
         assert!(result.is_ok());
         assert_eq!(token.emission_controller, Some(controller));
     }
@@ -356,10 +373,10 @@ mod tests {
         let owner = "dyt1owner".to_string();
         let controller = "dyt1controller".to_string();
         let recipient = "dyt1recipient".to_string();
-        let mut token = DRTToken::new(owner);
+        let mut token = DRTToken::new(owner.clone());
 
         // Set controller
-        token.set_emission_controller(controller.clone()).unwrap();
+        token.set_emission_controller(controller.clone(), &owner).unwrap();
 
         // Mint tokens
         let result = token.mint(recipient.clone(), 500, &controller);
@@ -375,10 +392,10 @@ mod tests {
         let controller = "dyt1controller".to_string();
         let unauthorized = "dyt1unauthorized".to_string();
         let recipient = "dyt1recipient".to_string();
-        let mut token = DRTToken::new(owner);
+        let mut token = DRTToken::new(owner.clone());
 
         // Set controller
-        token.set_emission_controller(controller).unwrap();
+        token.set_emission_controller(controller, &owner).unwrap();
 
         // Try to mint with unauthorized caller
         let result = token.mint(recipient, 500, &unauthorized);
@@ -390,10 +407,10 @@ mod tests {
         let owner = "dyt1owner".to_string();
         let controller = "dyt1controller".to_string();
         let user = "dyt1user".to_string();
-        let mut token = DRTToken::new(owner);
+        let mut token = DRTToken::new(owner.clone());
 
         // Set controller and mint tokens
-        token.set_emission_controller(controller.clone()).unwrap();
+        token.set_emission_controller(controller.clone(), &owner).unwrap();
         token.mint(user.clone(), 1000, &controller).unwrap();
 
         // Burn tokens
@@ -409,7 +426,7 @@ mod tests {
     fn test_drt_burn_insufficient_balance() {
         let owner = "dyt1owner".to_string();
         let user = "dyt1user".to_string();
-        let mut token = DRTToken::new(owner);
+        let mut token = DRTToken::new(owner.clone());
 
         // Try to burn without balance
         let result = token.burn(user, 100);
@@ -421,10 +438,10 @@ mod tests {
         let owner = "dyt1owner".to_string();
         let controller = "dyt1controller".to_string();
         let recipient = "dyt1recipient".to_string();
-        let mut token = DRTToken::new(owner);
+        let mut token = DRTToken::new(owner.clone());
 
         // Set controller
-        token.set_emission_controller(controller.clone()).unwrap();
+        token.set_emission_controller(controller.clone(), &owner).unwrap();
 
         // Process emission for block 10
         let result = token.process_emission(10, recipient.clone(), &controller);
@@ -443,10 +460,10 @@ mod tests {
         let controller = "dyt1controller".to_string();
         let from = "dyt1from".to_string();
         let to = "dyt1to".to_string();
-        let mut token = DRTToken::new(owner);
+        let mut token = DRTToken::new(owner.clone());
 
         // Set controller and mint tokens
-        token.set_emission_controller(controller.clone()).unwrap();
+        token.set_emission_controller(controller.clone(), &owner).unwrap();
         token.mint(from.clone(), 1000, &controller).unwrap();
 
         // Transfer tokens
@@ -458,13 +475,44 @@ mod tests {
     }
 
     #[test]
-    fn test_drt_update_emission_rate() {
+    fn test_drt_set_emission_controller_unauthorized() {
         let owner = "dyt1owner".to_string();
+        let attacker = "dyt1attacker".to_string();
         let controller = "dyt1controller".to_string();
         let mut token = DRTToken::new(owner);
 
+        // A non-owner must not be able to set the emission controller.
+        let result = token.set_emission_controller(controller, &attacker);
+        assert!(matches!(result, Err(TokenomicsError::NotAuthorized)));
+        assert!(token.emission_controller.is_none());
+    }
+
+    #[test]
+    fn test_drt_mint_overflow_rejected() {
+        let owner = "dyt1owner".to_string();
+        let controller = "dyt1controller".to_string();
+        let recipient = "dyt1recipient".to_string();
+        let mut token = DRTToken::new(owner.clone());
+        token
+            .set_emission_controller(controller.clone(), &owner)
+            .unwrap();
+
+        token
+            .mint(recipient.clone(), Balance::MAX, &controller)
+            .unwrap();
+        // A second mint would overflow total_supply / balance and must error.
+        let result = token.mint(recipient, 1, &controller);
+        assert!(matches!(result, Err(TokenomicsError::Overflow)));
+    }
+
+    #[test]
+    fn test_drt_update_emission_rate() {
+        let owner = "dyt1owner".to_string();
+        let controller = "dyt1controller".to_string();
+        let mut token = DRTToken::new(owner.clone());
+
         // Set controller
-        token.set_emission_controller(controller.clone()).unwrap();
+        token.set_emission_controller(controller.clone(), &owner).unwrap();
 
         // Update emission rate
         let result = token.update_emission_rate(2000, &controller);

@@ -85,6 +85,8 @@ pub enum StakingError {
     InsufficientDelegation,
     #[error("invalid slash percentage")]
     InvalidSlashRate,
+    #[error("commission rate exceeds 100%")]
+    InvalidCommission,
 }
 
 pub type StakingResult<T> = Result<T, StakingError>;
@@ -129,6 +131,10 @@ impl StakingContract {
         }
         if self_bond < self.config.min_self_bond {
             return Err(StakingError::SelfBondTooSmall);
+        }
+        // Commission is expressed in basis points; reject anything above 100%.
+        if commission_bps > 10_000 {
+            return Err(StakingError::InvalidCommission);
         }
 
         self.validators.insert(

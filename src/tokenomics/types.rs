@@ -48,6 +48,7 @@ pub enum TokenomicsError {
     ProposalNotFound,
     InvalidEmissionRate,
     TransferToSelf,
+    Overflow,
 }
 
 impl std::fmt::Display for TokenomicsError {
@@ -61,6 +62,7 @@ impl std::fmt::Display for TokenomicsError {
             TokenomicsError::ProposalNotFound => write!(f, "Proposal not found"),
             TokenomicsError::InvalidEmissionRate => write!(f, "Invalid emission rate"),
             TokenomicsError::TransferToSelf => write!(f, "Cannot transfer to self"),
+            TokenomicsError::Overflow => write!(f, "Arithmetic overflow"),
         }
     }
 }

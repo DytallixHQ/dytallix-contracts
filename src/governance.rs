@@ -148,6 +148,8 @@ pub enum GovernanceError {
     InvalidVotingWeight,
     #[error("duplicate vote")]
     DuplicateVote,
+    #[error("total eligible voting power must be positive")]
+    InvalidEligibleVotingPower,
 }
 
 pub type GovernanceResult<T> = Result<T, GovernanceError>;
@@ -303,6 +305,12 @@ impl GovernanceContract {
             .ok_or(GovernanceError::NotInVotingPeriod)?;
         if current_block <= voting_end {
             return Err(GovernanceError::NotInVotingPeriod);
+        }
+
+        // A zero eligible voting power would make the quorum zero and let any
+        // single vote finalize a proposal. Reject it outright.
+        if total_eligible_voting_power == 0 {
+            return Err(GovernanceError::InvalidEligibleVotingPower);
         }
 
         let participation = proposal.tally.participation();
